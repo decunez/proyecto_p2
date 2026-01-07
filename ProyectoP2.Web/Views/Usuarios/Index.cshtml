@@ -1,0 +1,40 @@
+﻿@model IEnumerable<ProyectoP2.Web.Models.Usuario>
+
+<h2>Lista de Usuarios</h2>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <form asp-action="Index" method="get">
+            <div class="input-group">
+                <input type="text" name="buscar" class="form-control" placeholder="Buscar por nombre o correo..." />
+                <button type="submit" class="btn btn-secondary">Buscar</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Limpiar</a>
+            </div>
+        </form>
+    </div>
+</div>
+<a asp-action="Create" class="btn btn-primary">Nuevo Usuario</a>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Cedula</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Cedula</td>
+                <td>@item.Nombre</td>
+                <td>@item.Correo</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning">Editar</a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger" onclick="return confirm('¿Borrar?');">Eliminar</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
