@@ -20,10 +20,6 @@ namespace ProyectoP2.Web.Controllers
             _client = httpClientFactory.CreateClient("MiApi");
         }
 
-        // ---------------------------------------------------------
-        //  PARTE 1: LOGIN CON GOOGLE
-        // ---------------------------------------------------------
-
         public IActionResult LoginGoogle()
         {
             var propiedades = new AuthenticationProperties
@@ -35,16 +31,13 @@ namespace ProyectoP2.Web.Controllers
 
         public async Task<IActionResult> GoogleResponse()
         {
-            // Verificamos la respuesta de Google
             var resultado = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             if (resultado.Succeeded)
             {
-                // Extraemos datos del usuario de Google
                 var nombre = resultado.Principal.FindFirst(ClaimTypes.Name)?.Value;
                 var correo = resultado.Principal.FindFirst(ClaimTypes.Email)?.Value;
 
-                // Guardamos en sesión para mantener al usuario logueado
                 if (!string.IsNullOrEmpty(nombre))
                 {
                     HttpContext.Session.SetString("UsuarioNombre", nombre);
@@ -62,18 +55,11 @@ namespace ProyectoP2.Web.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            // Si falló, volver al login
             return RedirectToAction("Login");
         }
 
-
-        // ---------------------------------------------------------
-        //  PARTE 2: LOGIN NORMAL (Base de Datos via API)
-        // ---------------------------------------------------------
-
         public IActionResult Login()
         {
-            // Si ya hay sesión activa, mandarlo al Home
             if (HttpContext.Session.GetString("UsuarioNombre") != null)
             {
                 return RedirectToAction("Index", "Home");
@@ -88,9 +74,6 @@ namespace ProyectoP2.Web.Controllers
             {
                 StringContent content = new StringContent(JsonConvert.SerializeObject(usuario), Encoding.UTF8, "application/json");
 
-                // OJO: Usamos la ruta relativa. 
-                // Program.cs tiene: https://IP:PORT/api/
-                // Aquí agregamos: Usuarios/login
                 HttpResponseMessage response = await _client.PostAsync("Usuarios/login", content);
 
                 if (response.IsSuccessStatusCode)
@@ -101,8 +84,6 @@ namespace ProyectoP2.Web.Controllers
                     if (usuarioEncontrado != null)
                     {
                         HttpContext.Session.SetString("UsuarioNombre", usuarioEncontrado.Nombre);
-                        // Opcional: Guardar ID o Rol si lo necesitas
-                        // HttpContext.Session.SetInt32("UsuarioId", usuarioEncontrado.Id);
 
                         return RedirectToAction("Index", "Home");
                     }
@@ -110,7 +91,6 @@ namespace ProyectoP2.Web.Controllers
             }
             catch (Exception ex)
             {
-                // Si la API está apagada o la IP está mal
                 ViewBag.Error = "Error de conexión con el servidor: " + ex.Message;
                 return View();
             }
@@ -119,16 +99,10 @@ namespace ProyectoP2.Web.Controllers
             return View();
         }
 
-        // ---------------------------------------------------------
-        //  PARTE 3: SALIR (LOGOUT)
-        // ---------------------------------------------------------
-
         public async Task<IActionResult> Logout()
         {
-            // 1. Limpiamos la sesión del servidor
             HttpContext.Session.Clear();
 
-            // 2. Limpiamos la cookie de autenticación (importante para Google)
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return RedirectToAction("Login");
