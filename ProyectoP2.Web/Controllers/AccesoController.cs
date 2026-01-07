@@ -5,16 +5,32 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using ProyectoP2.Web.Models;
 using System.Text;
-using System.Security.Claims; // Agregado para leer los datos de Google
+using System.Security.Claims;
 
 namespace ProyectoP2.Web.Controllers
 {
     public class AccesoController : Controller
     {
+        // NOTA: Si usas el truco de nip.io, cambia la IP aquí abajo por: "https://192.168.100.17.nip.io:7232/api/Usuarios/login"
         private readonly string _baseurl = "https://192.168.100.17:7232/api/Usuarios/login";
-        private readonly HttpClient _client = new HttpClient();
 
-        // 1. Iniciar el viaje a Google
+        // 1. Aquí solo declaramos la variable, NO la iniciamos todavía
+        private readonly HttpClient _client;
+
+        // 2. CONSTRUCTOR (NUEVO): Aquí configuramos el "Bypass" de seguridad SSL
+        public AccesoController()
+        {
+            var handler = new HttpClientHandler();
+            // Esta línea mágica permite certificados no seguros (como los de desarrollo)
+            handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
+
+            _client = new HttpClient(handler);
+        }
+
+        // ---------------------------------------------------------
+        //  PARTE 1: LOGIN CON GOOGLE
+        // ---------------------------------------------------------
+
         public IActionResult LoginGoogle()
         {
             var propiedades = new AuthenticationProperties
@@ -24,19 +40,15 @@ namespace ProyectoP2.Web.Controllers
             return Challenge(propiedades, GoogleDefaults.AuthenticationScheme);
         }
 
-        // 2. Respuesta de Google (AQUÍ ESTÁ EL CAMBIO IMPORTANTE)
         public async Task<IActionResult> GoogleResponse()
         {
-            // Verificamos qué nos respondió Google
             var resultado = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             if (resultado.Succeeded)
             {
-                // Extraemos la información del usuario que viene de Google
                 var nombre = resultado.Principal.FindFirst(ClaimTypes.Name)?.Value;
                 var correo = resultado.Principal.FindFirst(ClaimTypes.Email)?.Value;
 
-                // Esto es lo que faltaba para que se active tu menú
                 if (!string.IsNullOrEmpty(nombre))
                 {
                     HttpContext.Session.SetString("UsuarioNombre", nombre);
@@ -46,20 +58,16 @@ namespace ProyectoP2.Web.Controllers
                     HttpContext.Session.SetString("UsuarioNombre", correo ?? "Usuario Google");
                 }
 
-                // Opcional: También puedes guardar el correo si lo necesitas luego
                 if (correo != null)
                 {
                     HttpContext.Session.SetString("UsuarioCorreo", correo);
                 }
 
-                // Redirigimos al Home ya con la sesión iniciada
                 return RedirectToAction("Index", "Home");
             }
 
-            // Si falló, lo devolvemos al Login
             return RedirectToAction("Login");
         }
-
 
         // ---------------------------------------------------------
         //  PARTE 2: LOGIN NORMAL (Base de Datos)
@@ -67,7 +75,6 @@ namespace ProyectoP2.Web.Controllers
 
         public IActionResult Login()
         {
-            // Si ya hay sesión, no mostrar login, ir directo al Home
             if (HttpContext.Session.GetString("UsuarioNombre") != null)
             {
                 return RedirectToAction("Index", "Home");
@@ -80,10 +87,9 @@ namespace ProyectoP2.Web.Controllers
         {
             try
             {
-                // Convertimos el usuario a JSON
                 StringContent content = new StringContent(JsonConvert.SerializeObject(usuario), Encoding.UTF8, "application/json");
 
-                // Enviamos los datos a la API
+                // Ahora _client usará la configuración segura que hicimos en el constructor
                 HttpResponseMessage response = await _client.PostAsync(_baseurl, content);
 
                 if (response.IsSuccessStatusCode)
@@ -91,7 +97,6 @@ namespace ProyectoP2.Web.Controllers
                     var resultado = await response.Content.ReadAsStringAsync();
                     var usuarioEncontrado = JsonConvert.DeserializeObject<Usuario>(resultado);
 
-                    // Guardamos en sesión
                     if (usuarioEncontrado != null)
                     {
                         HttpContext.Session.SetString("UsuarioNombre", usuarioEncontrado.Nombre);
@@ -101,7 +106,6 @@ namespace ProyectoP2.Web.Controllers
             }
             catch (Exception ex)
             {
-                // Por si la API está apagada
                 ViewBag.Error = "Error de conexión con la API: " + ex.Message;
                 return View();
             }
@@ -116,10 +120,7 @@ namespace ProyectoP2.Web.Controllers
 
         public async Task<IActionResult> Logout()
         {
-            // 1. Borramos la sesión de nuestra App
             HttpContext.Session.Clear();
-
-            // 2. Cerramos la sesión de la cookie de Google también (para limpieza total)
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return RedirectToAction("Login");
