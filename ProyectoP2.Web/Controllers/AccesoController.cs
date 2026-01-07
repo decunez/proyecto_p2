@@ -11,20 +11,13 @@ namespace ProyectoP2.Web.Controllers
 {
     public class AccesoController : Controller
     {
-        // NOTA: Si usas el truco de nip.io, cambia la IP aquí abajo por: "https://192.168.100.17.nip.io:7232/api/Usuarios/login"
-        private readonly string _baseurl = "https://192.168.100.17:7232/api/Usuarios/login";
-
-        // 1. Aquí solo declaramos la variable, NO la iniciamos todavía
         private readonly HttpClient _client;
 
-        // 2. CONSTRUCTOR (NUEVO): Aquí configuramos el "Bypass" de seguridad SSL
-        public AccesoController()
+        // CONSTRUCTOR: Pedimos el cliente configurado en Program.cs
+        public AccesoController(IHttpClientFactory httpClientFactory)
         {
-            var handler = new HttpClientHandler();
-            // Esta línea mágica permite certificados no seguros (como los de desarrollo)
-            handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
-
-            _client = new HttpClient(handler);
+            // "MiApi" ya tiene la IP, el puerto y el bypass de seguridad SSL
+            _client = httpClientFactory.CreateClient("MiApi");
         }
 
         // ---------------------------------------------------------
@@ -42,13 +35,16 @@ namespace ProyectoP2.Web.Controllers
 
         public async Task<IActionResult> GoogleResponse()
         {
+            // Verificamos la respuesta de Google
             var resultado = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             if (resultado.Succeeded)
             {
+                // Extraemos datos del usuario de Google
                 var nombre = resultado.Principal.FindFirst(ClaimTypes.Name)?.Value;
                 var correo = resultado.Principal.FindFirst(ClaimTypes.Email)?.Value;
 
+                // Guardamos en sesión para mantener al usuario logueado
                 if (!string.IsNullOrEmpty(nombre))
                 {
                     HttpContext.Session.SetString("UsuarioNombre", nombre);
@@ -66,15 +62,18 @@ namespace ProyectoP2.Web.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
+            // Si falló, volver al login
             return RedirectToAction("Login");
         }
 
+
         // ---------------------------------------------------------
-        //  PARTE 2: LOGIN NORMAL (Base de Datos)
+        //  PARTE 2: LOGIN NORMAL (Base de Datos via API)
         // ---------------------------------------------------------
 
         public IActionResult Login()
         {
+            // Si ya hay sesión activa, mandarlo al Home
             if (HttpContext.Session.GetString("UsuarioNombre") != null)
             {
                 return RedirectToAction("Index", "Home");
@@ -89,8 +88,10 @@ namespace ProyectoP2.Web.Controllers
             {
                 StringContent content = new StringContent(JsonConvert.SerializeObject(usuario), Encoding.UTF8, "application/json");
 
-                // Ahora _client usará la configuración segura que hicimos en el constructor
-                HttpResponseMessage response = await _client.PostAsync(_baseurl, content);
+                // OJO: Usamos la ruta relativa. 
+                // Program.cs tiene: https://IP:PORT/api/
+                // Aquí agregamos: Usuarios/login
+                HttpResponseMessage response = await _client.PostAsync("Usuarios/login", content);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -100,13 +101,17 @@ namespace ProyectoP2.Web.Controllers
                     if (usuarioEncontrado != null)
                     {
                         HttpContext.Session.SetString("UsuarioNombre", usuarioEncontrado.Nombre);
+                        // Opcional: Guardar ID o Rol si lo necesitas
+                        // HttpContext.Session.SetInt32("UsuarioId", usuarioEncontrado.Id);
+
                         return RedirectToAction("Index", "Home");
                     }
                 }
             }
             catch (Exception ex)
             {
-                ViewBag.Error = "Error de conexión con la API: " + ex.Message;
+                // Si la API está apagada o la IP está mal
+                ViewBag.Error = "Error de conexión con el servidor: " + ex.Message;
                 return View();
             }
 
@@ -115,12 +120,15 @@ namespace ProyectoP2.Web.Controllers
         }
 
         // ---------------------------------------------------------
-        //  PARTE 3: SALIR
+        //  PARTE 3: SALIR (LOGOUT)
         // ---------------------------------------------------------
 
         public async Task<IActionResult> Logout()
         {
+            // 1. Limpiamos la sesión del servidor
             HttpContext.Session.Clear();
+
+            // 2. Limpiamos la cookie de autenticación (importante para Google)
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
             return RedirectToAction("Login");

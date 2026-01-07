@@ -7,39 +7,34 @@ namespace ProyectoP2.Web.Controllers
 {
     public class UsuariosController : Controller
     {
-        // AJUSTA ESTA URL AL PUERTO DE TU API
-        // Si usas nip.io, recuerda cambiarlo aquí también, si no, deja la IP.
-        private readonly string _baseurl = "https://192.168.100.17:7232/api/Usuarios/";
-
-        // Declaramos la variable pero NO la inicializamos aquí
         private readonly HttpClient _client;
 
-        // --- CONSTRUCTOR NUEVO (LA SOLUCIÓN AL ERROR SSL) ---
-        public UsuariosController()
+        // CONSTRUCTOR: Inyección de dependencias
+        // Aquí pedimos el cliente "MiApi" que configuramos en Program.cs
+        public UsuariosController(IHttpClientFactory httpClientFactory)
         {
-            var handler = new HttpClientHandler();
-            // Esto le dice al sistema: "Confía en el certificado aunque sea de desarrollo"
-            handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
-
-            _client = new HttpClient(handler);
+            _client = httpClientFactory.CreateClient("MiApi");
         }
 
-        // LISTAR Y BUSCAR
+        // ---------------------------------------------------
+        // 1. LISTAR (INDEX)
+        // ---------------------------------------------------
         public async Task<IActionResult> Index(string buscar)
         {
             List<Usuario> lista = new List<Usuario>();
-            string urlFinal = _baseurl;
 
-            // Si hay texto en buscar, cambiamos la URL
+            // Como la base ya es ".../api/", aquí solo ponemos el nombre del controlador
+            string endpoint = "Usuarios";
+
             if (!string.IsNullOrEmpty(buscar))
             {
-                // Nota: Asegúrate de que tu API tenga este endpoint "buscar"
-                urlFinal = _baseurl + "buscar/" + buscar;
+                // Ruta relativa: api/Usuarios/buscar/{texto}
+                endpoint = $"Usuarios/buscar/{buscar}";
             }
 
             try
             {
-                HttpResponseMessage response = await _client.GetAsync(urlFinal);
+                HttpResponseMessage response = await _client.GetAsync(endpoint);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -48,26 +43,26 @@ namespace ProyectoP2.Web.Controllers
                 }
                 else
                 {
-                    // Mostramos el error en pantalla si la API responde con error (ej. 404 o 500)
-                    return Content($"ERROR API: {response.StatusCode} - {response.ReasonPhrase}");
+                    ModelState.AddModelError("", $"Error al cargar lista: {response.StatusCode}");
                 }
             }
             catch (Exception ex)
             {
-                // Mostramos el error si la API está apagada o no se alcanza
-                return Content($"ERROR DE CONEXIÓN: {ex.Message}");
+                // Si la API está apagada, no explota, solo muestra vacío o error
+                ModelState.AddModelError("", $"Error de conexión: {ex.Message}");
             }
 
             return View(lista);
         }
 
-        // INSERTAR - VISTA
+        // ---------------------------------------------------
+        // 2. CREAR (CREATE)
+        // ---------------------------------------------------
         public IActionResult Create()
         {
             return View();
         }
 
-        // INSERTAR - LOGICA (POST)
         [HttpPost]
         public async Task<IActionResult> Create(Usuario usuario)
         {
@@ -76,45 +71,56 @@ namespace ProyectoP2.Web.Controllers
                 string data = JsonConvert.SerializeObject(usuario);
                 StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await _client.PostAsync(_baseurl, content);
+                // Enviamos a: api/Usuarios
+                HttpResponseMessage response = await _client.PostAsync("Usuarios", content);
 
-                if (response.IsSuccessStatusCode) return RedirectToAction("Index");
-
-                // Si falla, agregamos el error al modelo para verlo
-                ModelState.AddModelError("", "Error al crear en la API: " + response.StatusCode);
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    ModelState.AddModelError("", $"La API rechazó la creación: {response.StatusCode}");
+                }
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", "Error de conexión: " + ex.Message);
+                ModelState.AddModelError("", $"Error crítico: {ex.Message}");
             }
 
             return View(usuario);
         }
 
-        // EDITAR - VISTA (GET)
+        // ---------------------------------------------------
+        // 3. EDITAR (EDIT)
+        // ---------------------------------------------------
         public async Task<IActionResult> Edit(int id)
         {
             Usuario usuario = new Usuario();
 
             try
             {
-                HttpResponseMessage response = await _client.GetAsync(_baseurl + id);
+                // Obtenemos: api/Usuarios/{id}
+                HttpResponseMessage response = await _client.GetAsync($"Usuarios/{id}");
 
                 if (response.IsSuccessStatusCode)
                 {
                     string data = await response.Content.ReadAsStringAsync();
                     usuario = JsonConvert.DeserializeObject<Usuario>(data)!;
                 }
+                else
+                {
+                    return Content($"Error al buscar usuario {id}: {response.StatusCode}");
+                }
             }
             catch (Exception ex)
             {
-                return Content("Error al cargar usuario para editar: " + ex.Message);
+                return Content($"Error de conexión: {ex.Message}");
             }
 
             return View(usuario);
         }
 
-        // EDITAR - LOGICA (PUT)
         [HttpPost]
         public async Task<IActionResult> Edit(Usuario usuario)
         {
@@ -123,31 +129,40 @@ namespace ProyectoP2.Web.Controllers
                 string data = JsonConvert.SerializeObject(usuario);
                 StringContent content = new StringContent(data, Encoding.UTF8, "application/json");
 
-                // Ojo: Asegúrate que tu API espera el ID en la URL para el PUT
-                HttpResponseMessage response = await _client.PutAsync(_baseurl + usuario.Id, content);
+                // Enviamos PUT a: api/Usuarios/{id}
+                HttpResponseMessage response = await _client.PutAsync($"Usuarios/{usuario.Id}", content);
 
-                if (response.IsSuccessStatusCode) return RedirectToAction("Index");
-
-                ModelState.AddModelError("", "Error al editar en la API: " + response.StatusCode);
+                if (response.IsSuccessStatusCode)
+                {
+                    return RedirectToAction("Index");
+                }
+                else
+                {
+                    string mensajeError = await response.Content.ReadAsStringAsync();
+                    ModelState.AddModelError("", $"Error API ({response.StatusCode}): {mensajeError}");
+                }
             }
             catch (Exception ex)
             {
-                ModelState.AddModelError("", "Error de conexión: " + ex.Message);
+                ModelState.AddModelError("", $"Error de conexión: {ex.Message}");
             }
 
             return View(usuario);
         }
 
-        // ELIMINAR (DELETE)
+        // ---------------------------------------------------
+        // 4. ELIMINAR (DELETE)
+        // ---------------------------------------------------
         public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                HttpResponseMessage response = await _client.DeleteAsync(_baseurl + id);
+                // Borramos: api/Usuarios/{id}
+                await _client.DeleteAsync($"Usuarios/{id}");
             }
             catch (Exception)
             {
-                // Podrías manejar el error aquí si quieres
+                // Ignoramos errores al borrar para no bloquear al usuario
             }
 
             return RedirectToAction("Index");
