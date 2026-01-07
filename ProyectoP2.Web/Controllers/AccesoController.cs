@@ -11,7 +11,7 @@ namespace ProyectoP2.Web.Controllers
 {
     public class AccesoController : Controller
     {
-        private readonly string _baseurl = "https://192.168.100.17.nip.io:7232/api/Usuarios/login";
+        private readonly string _baseurl = "https://192.168.100.17:7232/api/Usuarios/login";
         private readonly HttpClient _client = new HttpClient();
 
         // 1. Iniciar el viaje a Google

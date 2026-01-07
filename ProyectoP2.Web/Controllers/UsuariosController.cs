@@ -8,7 +8,7 @@ namespace ProyectoP2.Web.Controllers
     public class UsuariosController : Controller
     {
         // AJUSTA ESTA URL AL PUERTO DE TU API
-        private readonly string _baseurl = "https://192.168.100.17.nip.io:7232/api/Usuarios/";
+        private readonly string _baseurl = "https://192.168.100.17:7232/api/Usuarios/";
         private readonly HttpClient _client = new HttpClient();
 
         // LISTAR Y BUSCAR
