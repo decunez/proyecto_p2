@@ -1,0 +1,69 @@
+﻿@model List<ProyectoP2.Web.Models.Producto>
+
+<div class="container mt-4">
+    <h2>📦 Gestión de Inventario</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <a asp-action="Create" class="btn btn-success">Nuevo Producto</a>
+        </div>
+
+        <div class="col-md-6">
+            <form asp-action="Index" method="get">
+                <div class="input-group">
+                    <input type="text" name="busqueda" class="form-control"
+                           placeholder="Buscar por nombre o código..."
+                           value="@ViewData["BusquedaActual"]">
+                    <button class="btn btn-primary" type="submit">🔍 Buscar</button>
+
+                    @if (ViewData["BusquedaActual"] != null)
+                    {
+                        <a asp-action="Index" class="btn btn-secondary">Limpiar</a>
+                    }
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Código</th>
+
+                <th>Nombre</th>
+                <th>Costo</th>
+                <th>Venta</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.CodigoBarra</td>
+
+                    <td>@item.Nombre</td>
+                    <td>@item.PrecioCosto.ToString("C")</td>
+                    <td>@item.PrecioVenta.ToString("C")</td>
+
+                    <td>
+                        @if (item.StockActual < 5)
+                        {
+                            <span class="badge bg-danger">@item.StockActual</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-success">@item.StockActual</span>
+                        }
+                    </td>
+
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Borrar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

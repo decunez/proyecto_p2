@@ -12,11 +12,8 @@ namespace ProyectoP2.Web.Controllers
     public class AccesoController : Controller
     {
         private readonly HttpClient _client;
-
-        // CONSTRUCTOR: Pedimos el cliente configurado en Program.cs
         public AccesoController(IHttpClientFactory httpClientFactory)
         {
-            // "MiApi" ya tiene la IP, el puerto y el bypass de seguridad SSL
             _client = httpClientFactory.CreateClient("MiApi");
         }
 
@@ -57,7 +54,6 @@ namespace ProyectoP2.Web.Controllers
 
             return RedirectToAction("Login");
         }
-
         public IActionResult Login()
         {
             if (HttpContext.Session.GetString("UsuarioNombre") != null)

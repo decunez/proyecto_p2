@@ -9,9 +9,9 @@ namespace ProyectoP2.API.Controllers
     [ApiController]
     public class UsuariosController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public UsuariosController(AppDbContext context)
+        public UsuariosController(ApplicationDbContext context)
         {
             _context = context;
         }
