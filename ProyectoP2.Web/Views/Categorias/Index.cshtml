@@ -1,0 +1,42 @@
+﻿@model IEnumerable<ProyectoP2.Web.Models.Categoria>
+
+<div class="container mt-4">
+    <h2>📂 Gestión de Categorías</h2>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <a asp-action="Create" class="btn btn-success">➕ Nueva Categoría</a>
+        </div>
+        <div class="col-md-6">
+            <form asp-action="Index" method="get">
+                <div class="input-group">
+                    <input type="text" name="busqueda" class="form-control" placeholder="Buscar categoría..." value="@ViewData["BusquedaActual"]">
+                    <button class="btn btn-primary" type="submit">Buscar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-striped table-bordered">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th style="width: 200px;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td class="fw-bold">@item.Nombre</td>
+                    <td>@item.Descripcion</td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm" onclick="return confirm('¿Borrar categoría?');">Borrar</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
