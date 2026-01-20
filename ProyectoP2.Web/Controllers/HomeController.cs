@@ -12,7 +12,6 @@ namespace ProyectoP2.Web.Controllers
         {
             _logger = logger;
         }
-
         public IActionResult Index()
         {
             return View();

@@ -11,33 +11,68 @@
     <link rel="stylesheet" href="~/ProyectoP2.Web.styles.css" asp-append-version="true" />
 
     <style>
-
+        /* Estilos para menú desplegable en PC */
         @@media all and (min-width: 992px) {
-            .dropdown:hover .dropdown-menu {
-                display: block;
-                margin-top: 0;
+            .dropdown:hover .dropdown-menu
+
+        {
+            display: block;
+            margin-top: 0;
+        }
+
+        }
+
+        /* --- ESTILOS SOPORTE TÉCNICO (MOVIMOS ESTO AQUÍ) --- */
+        .btn-flotante-soporte {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background-color: #0d6efd; /* Color Azul Bootstrap */
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.3);
+            z-index: 9999;
+            cursor: pointer;
+            transition: transform 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+            .btn-flotante-soporte:hover {
+                transform: scale(1.1);
+                background-color: #0b5ed7;
+                color: white;
             }
+
+        /* Ajuste para que el modal se vea por encima de todo */
+        #modalSoporte {
+            z-index: 10000;
         }
     </style>
 </head>
 <body>
     <header>
         @if (Context.Session.GetString("UsuarioNombre") != null)
-                        {
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PROYECTO PARCIAL 2</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    
-                    <ul class="navbar-nav flex-grow-1">
+        {
+            <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+                <div class="container-fluid">
+                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">PROYECTO PARCIAL 2</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                            aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
 
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-controller="Usuarios" asp-action="Index">USUARIOS</a>
-                        </li>
+                        <ul class="navbar-nav flex-grow-1">
+
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Usuarios" asp-action="Index">USUARIOS</a>
+                            </li>
 
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -57,15 +92,20 @@
                                     </li>
                                     <li><a class="dropdown-item" asp-controller="Categorias" asp-action="Index">📂 Categorías</a></li>
                                     <li><a class="dropdown-item" asp-controller="Proveedores" asp-action="Index">🚚 Proveedores</a></li>
+                                    <li class="nav-item">
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Comprobantes" asp-action="Index">
+                                            📦 Altas y Bajas
+                                        </a>
+                                    </li>
 
                                 </ul>
                             </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            </li>
 
-                    </ul>
+                        </ul>
 
                         <ul class="navbar-nav ms-auto">
                             @if (HttpContextAccessor.HttpContext.Session.GetString("UsuarioNombre") != null)
@@ -94,11 +134,12 @@
 
                         </ul>
 
+                    </div>
                 </div>
-            </div>
-        </nav>
+            </nav>
         }
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
@@ -110,9 +151,101 @@
             &copy; 2025 - Daniel_Cuñez.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
+    <div class="btn-flotante-soporte" data-bs-toggle="modal" data-bs-target="#modalSoporte" title="Soporte Técnico">
+        <span>?</span>
+    </div>
+
+    <div class="modal fade" id="modalSoporte" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Soporte Técnico</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">Describa su problema y un técnico lo revisará pronto.</p>
+                    <form id="formSoporte">
+                        <div class="mb-3">
+                            <label class="form-label">Su Nombre</label>
+                            <input type="text" id="soporteNombre" class="form-control" placeholder="Ej. Juan Perez" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mensaje / Problema</label>
+                            <textarea id="soporteMensaje" class="form-control" rows="3" required></textarea>
+                        </div>
+                    </form>
+                    <div id="alertSoporte" class="alert alert-success d-none mt-2"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-primary" onclick="enviarSoporte()">Enviar Ticket</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        async function enviarSoporte() {
+            const nombre = document.getElementById('soporteNombre').value;
+            const mensaje = document.getElementById('soporteMensaje').value;
+            const alerta = document.getElementById('alertSoporte');
+
+            if (!nombre || !mensaje) {
+                alert("Por favor complete todos los campos.");
+                return;
+            }
+
+            const data = {
+                Nombre: nombre,
+                Mensaje: mensaje
+            };
+
+            try {
+                // Asegúrate que esta ruta coincida con tu Controlador
+                const response = await fetch('/Soporte/EnviarTicket', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alerta.className = "alert alert-success mt-2";
+                    alerta.innerText = "¡Enviado! Su ticket está en cola de espera.";
+                    alerta.classList.remove("d-none");
+
+                    document.getElementById('soporteMensaje').value = "";
+
+                    setTimeout(() => {
+                        // Usamos Bootstrap para cerrar el modal
+                        var modalEl = document.getElementById('modalSoporte');
+                        var modal = bootstrap.Modal.getInstance(modalEl); // Si esto falla, usa bootstrap.Modal.getOrCreateInstance(modalEl)
+                        if(modal) modal.hide();
+
+                        alerta.classList.add("d-none");
+                    }, 2000);
+                } else {
+                    alerta.className = "alert alert-danger mt-2";
+                    alerta.innerText = "Error: " + (result.message || "No se pudo enviar.");
+                    alerta.classList.remove("d-none");
+                }
+            } catch (error) {
+                console.error(error);
+                alerta.className = "alert alert-danger mt-2";
+                alerta.innerText = "Error de conexión con el servidor.";
+                alerta.classList.remove("d-none");
+            }
+        }
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

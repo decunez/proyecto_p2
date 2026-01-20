@@ -1,0 +1,170 @@
+﻿@model ProyectoP2.Web.Models.Comprobante
+
+@{
+    ViewData["Title"] = "Ajuste de Inventario";
+}
+
+<div class="container mt-4">
+    <div class="card shadow-sm border-0">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0"><i class="fa fa-boxes"></i> Registro de Altas y Bajas (Ajuste de Stock)</h5>
+        </div>
+
+        <div class="card-body bg-light">
+            <form asp-action="Create" id="formMovimiento">
+
+                <div class="row mb-3 p-3 bg-white border rounded mx-1">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-secondary">Fecha del Ajuste</label>
+                        <input asp-for="Fecha" type="date" class="form-control" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-secondary">Tipo de Ajuste</label>
+                        <select asp-for="TipoMovimiento" class="form-control">
+                            <option value="ENTRADA">ENTRADA (Alta / Devolución)</option>
+                            <option value="SALIDA">SALIDA (Baja / Merma)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-bold text-secondary">Responsable / Proveedor</label>
+                        <select asp-for="ProveedorId" class="form-control" asp-items="ViewBag.ListaProveedores">
+                            <option value="">-- Seleccione Responsable --</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold text-secondary">Registrado por</label>
+                        <input type="text" class="form-control bg-secondary text-white" value="Admin" readonly />
+                        <input type="hidden" asp-for="UsuarioId" value="1" />
+                        <input type="hidden" asp-for="Total" value="0" />
+                    </div>
+                </div>
+
+                <div class="row align-items-end p-3 mx-1 mb-3 bg-white border rounded">
+                    <div class="col-md-5">
+                        <label class="form-label fw-bold">Buscar Producto</label>
+                        <select id="selectProducto" class="form-control">
+                            <option value="">-- Seleccione un producto --</option>
+                            @if (ViewBag.ListaProductos != null)
+                            {
+                                foreach (var p in ViewBag.ListaProductos)
+                                {
+                                    <option value="@p.Id" data-stock="@p.StockActual">
+                                        @p.Nombre
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold text-muted">Stock Actual (Sistema)</label>
+                        <input type="text" id="txtStock" class="form-control bg-light text-center fw-bold" readonly placeholder="-" />
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold text-primary">Cantidad a Ajustar</label>
+                        <input type="number" id="txtCantidad" class="form-control text-center fw-bold" value="1" min="1" />
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="button" id="btnAgregar" class="btn btn-success w-100 fw-bold">
+                            + Agregar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-responsive mx-1">
+                    <table class="table table-hover bg-white border">
+                        <thead class="table-secondary text-secondary">
+                            <tr>
+                                <th>Producto</th>
+                                <th class="text-center" style="width: 150px;">Cantidad</th>
+                                <th class="text-center" style="width: 100px;">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaDetalles">
+                        </tbody>
+                    </table>
+
+                    <div id="mensajeVacio" class="text-center text-muted py-4">
+                        No hay productos agregados al ajuste.
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg fw-bold">
+                        CONFIRMAR Y GUARDAR AJUSTE
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let index = 0;
+
+        // Cuando cambia el producto, solo mostramos el Stock Actual
+        $("#selectProducto").change(function(){
+            let opt = $(this).find(":selected");
+            let stock = opt.data("stock");
+            $("#txtStock").val(stock);
+        });
+
+        // Botón Agregar
+        $("#btnAgregar").click(function(){
+            let idProd = $("#selectProducto").val();
+            let nombreProd = $("#selectProducto option:selected").text();
+            let cantidad = parseInt($("#txtCantidad").val()) || 1;
+
+            // Validaciones básicas
+            if(!idProd) { alert("Por favor seleccione un producto."); return; }
+            if(cantidad <= 0) { alert("La cantidad debe ser mayor a 0."); return; }
+
+            // Ocultar mensaje de "vacio"
+            $("#mensajeVacio").hide();
+
+            // Creamos la fila.
+            // NOTA IMPORTANTE: Enviamos PrecioUnitario y Subtotal como "0" ocultos
+            // para que la base de datos no dé error, pero el usuario no los ve.
+            let row = `
+                <tr id="fila_${index}">
+                    <td>
+                        <input type="hidden" name="Detalles[${index}].ProductoId" value="${idProd}" />
+                        <input type="hidden" name="Detalles[${index}].Cantidad" value="${cantidad}" />
+
+                        <input type="hidden" name="Detalles[${index}].PrecioUnitario" value="0" />
+                        <input type="hidden" name="Detalles[${index}].Subtotal" value="0" />
+
+                        <span class="fw-bold text-dark">${nombreProd}</span>
+                    </td>
+                    <td class="text-center fs-5">${cantidad}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminar(${index})">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+            $("#tablaDetalles").append(row);
+            index++;
+
+            // Resetear inputs para seguir agregando rápido
+            $("#selectProducto").val("");
+            $("#txtStock").val("");
+            $("#txtCantidad").val("1");
+            $("#selectProducto").focus();
+        });
+
+        function eliminar(id) {
+            $("#fila_" + id).remove();
+            // Si no quedan filas, mostrar mensaje
+            if ($("#tablaDetalles tr").length === 0) {
+                $("#mensajeVacio").show();
+            }
+        }
+    </script>
+}

@@ -9,9 +9,9 @@ namespace ProyectoP2.API.Controllers
     [ApiController]
     public class ProveedoresController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public ProveedoresController(ApplicationDbContext context)
+        public ProveedoresController(AppDbContext context)
         {
             _context = context;
         }

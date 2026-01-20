@@ -1,21 +1,23 @@
 using Microsoft.EntityFrameworkCore;
+using ProyectoP2.API; // Para ServiceBusConsumer
+using ProyectoP2.API.Data; // Para AppDbContext
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-
-// Agregar esto antes de var app = builder.Build();
-builder.Services.AddDbContext<ProyectoP2.API.Data.ApplicationDbContext>(options =>
+// 1. Base de Datos
+builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// 2. Controladores
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// 3. Registrar el Consumidor (Proceso en segundo plano)
+builder.Services.AddHostedService<ServiceBusConsumer>();
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -23,9 +25,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

@@ -1,0 +1,65 @@
+﻿@model IEnumerable<ProyectoP2.Web.Models.Comprobante>
+
+@{
+    ViewData["Title"] = "Kardex";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>Registro de Altas y Bajas</h3>
+    <a asp-action="Create" class="btn btn-primary">+ Nuevo Movimiento</a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white text-primary fw-bold">
+        Listado de Comprobantes
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Nº Comprobante</th>
+                    <th>Fecha</th>
+                    <th>Tipo</th>
+                    <th>Proveedor / Responsable</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.Id.ToString("D6")</td>
+                            <td>@item.Fecha.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                @if (item.TipoMovimiento == "ENTRADA")
+                                {
+                                    <span class="badge bg-success">ENTRADA</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">SALIDA</span>
+                                }
+                            </td>
+                            <td>@(item.Proveedor?.NombreEmpresa ?? "---")</td>
+                            <td class="fw-bold">$ @item.Total.ToString("N2")</td>
+                            <td>
+                                <a asp-action="PdfReporte" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" target="_blank">PDF</a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No hay movimientos registrados aún.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

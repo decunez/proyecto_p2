@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using ProyectoP2.Web.Models; // Asegúrate de tener el modelo aquí
+using ProyectoP2.Web.Models;
 using System.Text;
 
 namespace ProyectoP2.Web.Controllers
@@ -14,7 +14,7 @@ namespace ProyectoP2.Web.Controllers
             _client = httpClientFactory.CreateClient("MiApi");
         }
 
-        // 1. INDEX CON BUSCADOR
+        //INDEX CON BUSCADOR
         public async Task<IActionResult> Index(string busqueda)
         {
             List<Categoria> lista = new List<Categoria>();
@@ -28,7 +28,6 @@ namespace ProyectoP2.Web.Controllers
 
             if (!string.IsNullOrEmpty(busqueda))
             {
-                // Aquí sí usamos "Nombre" porque la tabla Categorias sí tiene esa columna
                 lista = lista.Where(c => c.Nombre.ToLower().Contains(busqueda.ToLower())).ToList();
             }
 
@@ -36,7 +35,7 @@ namespace ProyectoP2.Web.Controllers
             return View(lista);
         }
 
-        // 2. CREATE (VISTA)
+        //CREATE (VISTA)
         public IActionResult Create()
         {
             return View();
@@ -56,7 +55,7 @@ namespace ProyectoP2.Web.Controllers
             return View(categoria);
         }
 
-        // 4. EDIT (VISTA)
+        //EDIT (VISTA)
         public async Task<IActionResult> Edit(int id)
         {
             var response = await _client.GetAsync($"Categorias/{id}");
@@ -69,7 +68,7 @@ namespace ProyectoP2.Web.Controllers
             return NotFound();
         }
 
-        // 5. EDIT (ACCIÓN)
+        //(ACCIÓN)
         [HttpPost]
         public async Task<IActionResult> Edit(int id, Categoria categoria)
         {
@@ -85,7 +84,7 @@ namespace ProyectoP2.Web.Controllers
             return View(categoria);
         }
 
-        // 6. DELETE
+        //DELETE
         public async Task<IActionResult> Delete(int id)
         {
             await _client.DeleteAsync($"Categorias/{id}");

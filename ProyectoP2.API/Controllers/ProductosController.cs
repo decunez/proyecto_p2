@@ -9,9 +9,9 @@ namespace ProyectoP2.API.Controllers
     [ApiController]
     public class ProductosController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public ProductosController(ApplicationDbContext context)
+        public ProductosController(AppDbContext context)
         {
             _context = context;
         }

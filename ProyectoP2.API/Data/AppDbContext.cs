@@ -3,9 +3,9 @@ using ProyectoP2.API.Models;
 
 namespace ProyectoP2.API.Data
 {
-    public class ApplicationDbContext : DbContext
+    public class AppDbContext : DbContext
     {
-        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
 
@@ -15,6 +15,10 @@ namespace ProyectoP2.API.Data
         public DbSet<Proveedor> Proveedores { get; set; }
         public DbSet<Producto> Productos { get; set; }
 
+        public DbSet<Comprobante> Comprobantes { get; set; }
+        public DbSet<ComprobanteDetalle> ComprobanteDetalles { get; set; }
+
         public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
+        public DbSet<Soporte> Soportes { get; set; }
     }
 }

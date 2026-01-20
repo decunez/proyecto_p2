@@ -1,8 +1,102 @@
 ﻿@{
-    ViewData["Title"] = "Proyecto Parcial_2";
+    ViewData["Title"] = "Inicio";
 }
 
 <div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <h1 class="display-4">Bienvenido al Sistema P2</h1>
+    <p>Gestiona tus productos, usuarios y soporte técnico.</p>
+
+    <button type="button" class="btn btn-primary btn-lg mt-4" data-bs-toggle="modal" data-bs-target="#modalSoporte">
+        <i class="fa fa-headset"></i> Contactar Soporte Técnico
+    </button>
 </div>
+
+<div class="modal fade" id="modalSoporte" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Nuevo Ticket</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="formSoporte">
+                    <div class="mb-3">
+                        <label class="form-label">Su Nombre:</label>
+                        <input type="text" class="form-control" id="txtNombre" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Su Correo:</label>
+                        <input type="email" class="form-control" id="txtEmail" placeholder="nombre@correo.com" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Descripción:</label>
+                        <textarea class="form-control" id="txtMensaje" rows="4" required></textarea>
+                    </div>
+                </form>
+
+                <div id="msgExito" class="alert alert-success mt-3" style="display:none;">
+                    ¡Ticket enviado correctamente!
+                </div>
+                <div id="msgError" class="alert alert-danger mt-3" style="display:none;">
+                    Error al enviar.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" onclick="enviarTicket()">Enviar Ticket</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function enviarTicket() {
+        const nombre = document.getElementById("txtNombre").value;
+        const mensaje = document.getElementById("txtMensaje").value;
+        // 1. CAPTURAR EL CORREO
+        const email = document.getElementById("txtEmail").value;
+
+        const alertaExito = document.getElementById("msgExito");
+        const alertaError = document.getElementById("msgError");
+
+        alertaExito.style.display = 'none';
+        alertaError.style.display = 'none';
+
+        if (!nombre || !mensaje || !email) {
+            alert("Por favor completa todos los campos (Nombre, Correo y Mensaje)");
+            return;
+        }
+
+        // 2. AGREGARLO AL OBJETO
+        const datos = {
+            NombreCliente: nombre,
+            Email: email,  // <--- Aquí enviamos lo que escribió el usuario
+            Descripcion: mensaje,
+            Asunto: "Ticket Web"
+        };
+
+        try {
+            const response = await fetch('/Soporte/EnviarTicket', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
+
+            if (response.ok) {
+                alertaExito.style.display = 'block';
+                document.getElementById("formSoporte").reset(); // Limpia todos los campos
+            } else {
+                const errorTexto = await response.text();
+                alertaError.innerText = "Error: " + errorTexto;
+                alertaError.style.display = 'block';
+            }
+        } catch (error) {
+            alertaError.innerText = "Error de conexión.";
+            alertaError.style.display = 'block';
+        }
+    }
+</script>

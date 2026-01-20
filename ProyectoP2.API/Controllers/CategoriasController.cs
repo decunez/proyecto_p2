@@ -9,9 +9,9 @@ namespace ProyectoP2.API.Controllers
     [ApiController]
     public class CategoriasController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public CategoriasController(ApplicationDbContext context)
+        public CategoriasController(AppDbContext context)
         {
             _context = context;
         }

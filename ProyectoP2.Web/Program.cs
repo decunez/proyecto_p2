@@ -1,38 +1,52 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using ProyectoP2.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
-var urlApi = builder.Configuration["ApiUrl"];
+builder.Services.AddControllersWithViews(); 
+
+var urlApi = builder.Configuration["ApiUrl"] ?? "https://localhost:7232/";
 
 builder.Services.AddHttpClient("MiApi", client =>
 {
-    client.BaseAddress = new Uri(urlApi ?? "https://localhost:7232/api/");
-    client.Timeout = TimeSpan.FromSeconds(30); 
+    client.BaseAddress = new Uri(urlApi);
+    client.Timeout = TimeSpan.FromSeconds(30);
 })
-.ConfigurePrimaryHttpMessageHandler(() =>
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
-    var handler = new HttpClientHandler();
-    handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true;
-    return handler;
+    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
 });
 
+builder.Services.AddHttpClient("MiClienteAPI", client =>
+{
+    client.BaseAddress = new Uri(urlApi);
+    client.Timeout = TimeSpan.FromSeconds(30);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    ServerCertificateCustomValidationCallback = (sender, cert, chain, sslPolicyErrors) => true
+});
 
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
 })
-.AddCookie()
+.AddCookie(options =>
+{
+    options.LoginPath = "/Acceso/Login"; 
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+})
 .AddGoogle(options =>
 {
     options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
     options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 });
 
-
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
+
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -40,6 +54,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
+builder.Services.AddSingleton<ServiceBusProducer>();
 
 var app = builder.Build();
 
@@ -54,11 +69,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseSession();        // 1. Activar Sesión
-app.UseAuthentication(); // 2. Identificar usuario (Cookie/Google)
-app.UseAuthorization();  // 3. Permisos
-
-// Ruta por defecto: Al entrar, te manda al Login
+app.UseAuthentication(); 
+app.UseAuthorization();  
+app.UseSession();        
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Acceso}/{action=Login}/{id?}");

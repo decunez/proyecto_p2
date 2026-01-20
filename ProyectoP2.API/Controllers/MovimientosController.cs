@@ -9,9 +9,9 @@ namespace ProyectoP2.API.Controllers
     [ApiController]
     public class MovimientosController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly AppDbContext _context;
 
-        public MovimientosController(ApplicationDbContext context)
+        public MovimientosController(AppDbContext context)
         {
             _context = context;
         }

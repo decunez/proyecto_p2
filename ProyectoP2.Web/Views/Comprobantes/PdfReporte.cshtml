@@ -1,0 +1,154 @@
+﻿@model ProyectoP2.Web.Models.Comprobante
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Reporte Movimiento #@Model.Id</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        .header-box {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 20px;
+            background-color: #fcfcfc;
+        }
+
+        .company-title {
+            color: #0056b3;
+            margin-bottom: 5px;
+        }
+
+        .table td, .table th {
+            vertical-align: middle;
+        }
+        /* Estilos para etiquetas de tipo */
+        .badge-entrada {
+            color: #155724;
+            background-color: #d4edda;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 10px;
+        }
+
+        .badge-salida {
+            color: #721c24;
+            background-color: #f8d7da;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+
+        <div class="row mb-4">
+            <div class="col-6">
+                <h2 class="company-title">GRUPO 5</h2>
+                <p class="mb-0">Dirección: Av. Siempre Viva 123</p>
+                <p>RUC: 123456789001</p>
+            </div>
+            <div class="col-6 text-right">
+                <h4 class="text-uppercase">COMPROBANTE DE @Model.TipoMovimiento</h4>
+                <h3 class="text-danger">Nº @Model.Id.ToString("D6")</h3>
+                <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+            </div>
+        </div>
+
+        <div class="header-box">
+            <div class="row">
+                <div class="col-12">
+                    <p class="mb-1">
+                        <strong>Responsable:</strong>
+                        @if (Model.Proveedor != null)
+                        {
+                            <span class="text-uppercase">@Model.Proveedor.NombreEmpresa</span>
+                        }
+                        else
+                        {
+                            <span>---</span>
+                        }
+                    </p>
+                    <p class="mb-0">
+                        <strong>Usuario Registro:</strong> @(Model.UsuarioResponsable ?? "Sistema")
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <table class="table table-bordered table-striped table-sm">
+            <thead class="thead-light">
+                <tr>
+                    <th>Producto</th>
+                    <th class="text-center" style="width: 100px;">Tipo Mov.</th>
+                    <th class="text-center" style="width: 100px;">Cant. Operación</th>
+                    <th class="text-center" style="width: 100px;">Saldo (Stock)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Detalles != null && Model.Detalles.Any())
+                {
+                    @foreach (var item in Model.Detalles)
+                    {
+                        <tr>
+                            <td>
+                                @(item.Producto != null ? item.Producto.Nombre : "Producto #" + item.ProductoId)
+                            </td>
+
+                            <td class="text-center">
+                                @if (Model.TipoMovimiento == "ENTRADA")
+                                {
+                                    <span class="badge-entrada">ENTRADA</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-salida">SALIDA</span>
+                                }
+                            </td>
+
+                            <td class="text-center font-weight-bold" style="font-size: 14px;">
+                                @item.Cantidad
+                            </td>
+
+                            <td class="text-center text-muted">
+                                @if (item.Producto != null)
+                                {
+                                    @item.Producto.StockActual
+                                }
+                                else
+                                {
+                                    <span>-</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="4" class="text-center py-3">No hay detalles disponibles.</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="text-center text-muted" style="margin-top: 80px;">
+            <p>__________________________________</p>
+            <p>Firma Autorizada</p>
+        </div>
+
+    </div>
+</body>
+</html>

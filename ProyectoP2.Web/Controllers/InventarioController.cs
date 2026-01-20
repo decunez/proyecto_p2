@@ -16,7 +16,7 @@ namespace ProyectoP2.Web.Controllers
         }
 
         // 1. LISTAR PRODUCTOS (CON BÚSQUEDA)
-        public async Task<IActionResult> Index(string busqueda) // <--- Agregamos este parámetro
+        public async Task<IActionResult> Index(string busqueda)
         {
             List<Producto> lista = new List<Producto>();
             try
@@ -32,7 +32,7 @@ namespace ProyectoP2.Web.Controllers
                 // 2. Si el usuario escribió algo, filtramos la lista aquí mismo
                 if (!string.IsNullOrEmpty(busqueda))
                 {
-                    busqueda = busqueda.ToLower(); // Convertimos a minúsculas para comparar mejor
+                    busqueda = busqueda.ToLower(); 
 
                     lista = lista.Where(p =>
                         (p.Nombre != null && p.Nombre.ToLower().Contains(busqueda)) ||
@@ -77,7 +77,6 @@ namespace ProyectoP2.Web.Controllers
             return View(producto);
         }
 
-        // GET: Inventario/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
             // 1. Buscar el producto
