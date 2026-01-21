@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProyectoP2.Web.Models
 {
@@ -19,6 +20,8 @@ namespace ProyectoP2.Web.Models
 
         public decimal Total { get; set; }
         public string? Estado { get; set; }
+
+        public Usuario? Usuario { get; set; }
 
         // Lista de productos en el comprobante
         public List<DetalleComprobante> Detalles { get; set; } = new List<DetalleComprobante>();

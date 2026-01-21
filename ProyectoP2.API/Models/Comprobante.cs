@@ -18,6 +18,9 @@ namespace ProyectoP2.API.Models
         [ForeignKey("ProveedorId")]
         public Proveedor? Proveedor { get; set; }
 
+        [ForeignKey("UsuarioId")]
+        public virtual Usuario? Usuario { get; set; }
+
         // En tu DB es int, así que lo manejamos como int
         public int UsuarioId { get; set; }
 

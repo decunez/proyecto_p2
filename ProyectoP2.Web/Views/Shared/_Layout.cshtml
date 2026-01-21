@@ -25,7 +25,7 @@
 
         }
 
-        /* --- ESTILOS DEL NUEVO WIDGET DE CHAT --- */
+        /*  ESTILOS DEL NUEVO WIDGET DE CHAT  */
         .btn-flotante {
             position: fixed;
             bottom: 30px;
@@ -109,10 +109,10 @@
                                     INVENTARIO
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="Inventario" asp-action="Index">📦 Productos</a></li>
-                                    <li><a class="dropdown-item" asp-area="" asp-controller="Movimientos" asp-action="Index">📜 Kardex</a></li>
                                     <li><a class="dropdown-item" asp-controller="Categorias" asp-action="Index">📂 Categorías</a></li>
                                     <li><a class="dropdown-item" asp-controller="Proveedores" asp-action="Index">🚚 Proveedores</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="Inventario" asp-action="Index">📦 Productos</a></li>
+                                    <li><a class="dropdown-item" asp-area="" asp-controller="Comprobantes" asp-action="Historial">📜 Kardex</a></li>
                                     <li class="nav-item"><a class="nav-link text-dark" asp-area="" asp-controller="Comprobantes" asp-action="Index">📦 Altas y Bajas</a></li>
                                 </ul>
                             </li>

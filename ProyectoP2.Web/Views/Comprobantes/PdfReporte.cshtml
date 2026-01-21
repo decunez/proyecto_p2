@@ -1,154 +1,106 @@
 ﻿@model ProyectoP2.Web.Models.Comprobante
+
 @{
-    Layout = null;
+    Layout = null; // Sin layout para que sea una hoja limpia
 }
 
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8" />
-    <title>Reporte Movimiento #@Model.Id</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-
+    <meta name="viewport" content="width=device-width" />
+    <title>Comprobante #@Model.Id</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 12px;
+            padding: 40px;
         }
 
-        .header-box {
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-bottom: 20px;
-            background-color: #fcfcfc;
-        }
-
-        .company-title {
-            color: #0056b3;
-            margin-bottom: 5px;
-        }
-
-        .table td, .table th {
-            vertical-align: middle;
-        }
-        /* Estilos para etiquetas de tipo */
-        .badge-entrada {
-            color: #155724;
-            background-color: #d4edda;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 10px;
-        }
-
-        .badge-salida {
-            color: #721c24;
-            background-color: #f8d7da;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 10px;
+        .watermark {
+            position: absolute;
+            opacity: 0.1;
+            font-size: 5rem;
+            transform: rotate(-45deg);
+            top: 30%;
+            left: 20%;
+            color: gray;
+            z-index: -1;
         }
     </style>
 </head>
 <body>
-    <div class="container-fluid p-0">
 
-        <div class="row mb-4">
-            <div class="col-6">
-                <h2 class="company-title">GRUPO 5</h2>
-                <p class="mb-0">Dirección: Av. Siempre Viva 123</p>
-                <p>RUC: 123456789001</p>
-            </div>
-            <div class="col-6 text-right">
-                <h4 class="text-uppercase">COMPROBANTE DE @Model.TipoMovimiento</h4>
-                <h3 class="text-danger">Nº @Model.Id.ToString("D6")</h3>
-                <p>Fecha: @Model.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
-            </div>
+    <div class="watermark">@Model.TipoMovimiento</div>
+
+    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+        <div>
+            <h2 class="mb-0">Comprobante de Inventario</h2>
+            <small class="text-muted">Sistema de Gestión P2</small>
         </div>
-
-        <div class="header-box">
-            <div class="row">
-                <div class="col-12">
-                    <p class="mb-1">
-                        <strong>Responsable:</strong>
-                        @if (Model.Proveedor != null)
-                        {
-                            <span class="text-uppercase">@Model.Proveedor.NombreEmpresa</span>
-                        }
-                        else
-                        {
-                            <span>---</span>
-                        }
-                    </p>
-                    <p class="mb-0">
-                        <strong>Usuario Registro:</strong> @(Model.UsuarioResponsable ?? "Sistema")
-                    </p>
-                </div>
-            </div>
+        <div class="text-end">
+            <h4 class="text-danger">Nº @Model.Id.ToString("D6")</h4>
+            <span class="badge bg-primary fs-6">ESTADO: GESTIONADO</span>
         </div>
+    </div>
 
-        <table class="table table-bordered table-striped table-sm">
-            <thead class="thead-light">
-                <tr>
-                    <th>Producto</th>
-                    <th class="text-center" style="width: 100px;">Tipo Mov.</th>
-                    <th class="text-center" style="width: 100px;">Cant. Operación</th>
-                    <th class="text-center" style="width: 100px;">Saldo (Stock)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if (Model.Detalles != null && Model.Detalles.Any())
-                {
-                    @foreach (var item in Model.Detalles)
-                    {
-                        <tr>
-                            <td>
-                                @(item.Producto != null ? item.Producto.Nombre : "Producto #" + item.ProductoId)
-                            </td>
+    <div class="row mb-4 p-3 bg-light rounded">
+        <div class="col-6">
+            <p><strong>Fecha de Emisión:</strong> @Model.Fecha.ToString("dd/MM/yyyy HH:mm")</p>
+            <p><strong>Tipo de Movimiento:</strong> @Model.TipoMovimiento</p>
+            <p><strong>Responsable (Usuario):</strong> @(Model.Usuario?.Nombre ?? "Sistema / Admin")</p>
+        </div>
+        <div class="col-6">
+            <p><strong>Proveedor:</strong> @(Model.Proveedor?.NombreEmpresa ?? "---")</p>
+            <p><strong>Notas:</strong> Registro generado automáticamente.</p>
+        </div>
+    </div>
 
-                            <td class="text-center">
-                                @if (Model.TipoMovimiento == "ENTRADA")
-                                {
-                                    <span class="badge-entrada">ENTRADA</span>
-                                }
-                                else
-                                {
-                                    <span class="badge-salida">SALIDA</span>
-                                }
-                            </td>
-
-                            <td class="text-center font-weight-bold" style="font-size: 14px;">
-                                @item.Cantidad
-                            </td>
-
-                            <td class="text-center text-muted">
-                                @if (item.Producto != null)
-                                {
-                                    @item.Producto.StockActual
-                                }
-                                else
-                                {
-                                    <span>-</span>
-                                }
-                            </td>
-                        </tr>
-                    }
-                }
-                else
+    <table class="table table-bordered border-dark">
+        <thead class="table-secondary text-center">
+            <tr>
+                <th>Producto / Item</th>
+                <th style="width: 150px;">Cantidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Detalles != null && Model.Detalles.Any())
+            {
+                foreach (var det in Model.Detalles)
                 {
                     <tr>
-                        <td colspan="4" class="text-center py-3">No hay detalles disponibles.</td>
+                        <td>@(det.Producto?.Nombre ?? "Producto ID " + det.ProductoId)</td>
+                        <td class="text-center fw-bold fs-5">@det.Cantidad</td>
                     </tr>
                 }
-            </tbody>
-        </table>
+            }
+            else
+            {
+                <tr>
+                    <td colspan="2" class="text-center">No hay detalles registrados.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 
-        <div class="text-center text-muted" style="margin-top: 80px;">
-            <p>__________________________________</p>
-            <p>Firma Autorizada</p>
+    <div class="mt-5 pt-5 border-top">
+        <div class="row text-center">
+            <div class="col-6">
+                <br /><br />
+                __________________________<br />
+                <strong>Firma Responsable</strong><br />
+                @(Model.Usuario?.Nombre ?? "Usuario")
+            </div>
+            <div class="col-6">
+                <br /><br />
+                __________________________<br />
+                <strong>Recibido / Entregado</strong>
+            </div>
         </div>
-
     </div>
+
+    <script>
+        // Opcional: Auto-imprimir al abrir
+        window.print();
+    </script>
 </body>
 </html>

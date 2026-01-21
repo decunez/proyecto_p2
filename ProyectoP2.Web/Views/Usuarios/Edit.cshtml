@@ -3,9 +3,7 @@
 <h2>Editar Usuario</h2>
 
 <form asp-action="Edit" method="post">
-
     <input type="hidden" asp-for="Id" />
-
     <div class="form-group">
         <label>Nombre</label>
         <input asp-for="Nombre" class="form-control" />
@@ -35,17 +33,14 @@
         <label>Password</label>
         <input asp-for="Password" type="password" class="form-control" />
     </div>
-
     <br />
 
     <div asp-validation-summary="All" class="text-danger"></div>
-
     <br />
 
     <button type="submit" class="btn btn-warning">Actualizar</button>
     <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
 </form>
-
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

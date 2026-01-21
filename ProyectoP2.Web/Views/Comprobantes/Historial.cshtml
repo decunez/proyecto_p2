@@ -1,0 +1,76 @@
+﻿@model List<ProyectoP2.Web.Controllers.KardexItem>
+
+@{
+    ViewData["Title"] = "Historial de Movimientos (Kardex)";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3><i class="fa-solid fa-list-check"></i> Historial de Altas y Bajas</h3>
+        <a asp-action="Index" class="btn btn-outline-secondary">Volver a Comprobantes</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Producto</th>
+                        <th>Tipo Movimiento</th>
+                        <th class="text-center">Cant.</th>
+                        <th>Ref.</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Fecha.ToShortDateString()</td>
+                                <td class="fw-bold">@item.Producto</td>
+
+                                <td>
+                                    @if (item.Tipo == "ENTRADA")
+                                    {
+                                        <span class="badge bg-success"><i class="fa fa-arrow-up"></i> ALTA / COMPRA</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-warning text-dark"><i class="fa fa-arrow-down"></i> BAJA / VENTA</span>
+                                    }
+                                </td>
+
+                                <td class="text-center fs-5">
+                                    @if (item.Tipo == "ENTRADA")
+                                    {
+                                        <span class="text-success fw-bold">+@item.Cantidad</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-danger fw-bold">-@item.Cantidad</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    <a asp-action="PdfReporte" asp-route-id="@item.ComprobanteId" class="text-decoration-none">
+                                        <small>Doc #@item.ComprobanteId</small>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                No hay movimientos registrados aún.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
