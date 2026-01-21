@@ -1,0 +1,265 @@
+﻿@{
+    ViewData["Title"] = "Bandeja de Soporte";
+}
+
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-4 border-end d-flex flex-column" style="height: 85vh;">
+
+            <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="m-0">📥 Tickets</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="cargarTickets()" title="Actualizar lista">
+                    <i class="fa fa-sync"></i> ↻
+                </button>
+            </div>
+
+            <div id="listaTickets" class="list-group list-group-flush" style="overflow-y: auto;">
+                <div class="text-center mt-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="small text-muted mt-2">Cargando tickets...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 d-flex flex-column" style="height: 85vh;">
+
+            <div class="p-3 bg-primary text-white shadow-sm d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 id="chatTitulo" class="m-0 fw-bold">Selecciona un ticket</h5>
+                    <small id="chatSubtitulo" class="text-white-50">...</small>
+                </div>
+                <span class="badge bg-light text-primary" id="badgeId">#</span>
+            </div>
+
+            <div id="cajaMensajes" class="flex-grow-1 p-4" style="overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background-color: #f8f9fa;">
+                <div class="text-center text-muted mt-5">
+                    <i class="fa fa-comments fa-3x mb-3"></i>
+                    <p>Selecciona un usuario de la izquierda para ver la conversación.</p>
+                </div>
+            </div>
+
+            <div class="p-3 border-top bg-light d-flex gap-2">
+                <input type="hidden" id="ticketActualId" value="0">
+                <input type="text" id="txtRespuesta" class="form-control" placeholder="Escriba un mensaje..." disabled autocomplete="off">
+                <button class="btn btn-primary px-4" id="btnEnviar" onclick="enviarMensaje()" disabled>
+                    Enviar ➤
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Estilos de las burbujas */
+    .mensaje {
+        max-width: 75%;
+        padding: 10px 15px;
+        border-radius: 18px;
+        position: relative;
+        font-size: 0.95rem;
+        line-height: 1.4;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        word-wrap: break-word;
+    }
+
+    /* Mensaje del Cliente (Izquierda - Blanco) */
+    .msg-cliente {
+        align-self: flex-start;
+        background-color: #ffffff;
+        border: 1px solid #e0e0e0;
+        color: #333;
+        border-bottom-left-radius: 4px;
+    }
+
+    /* Mensaje del Admin (Derecha - Azul) */
+    .msg-admin {
+        align-self: flex-end;
+        background-color: #0d6efd;
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .hora-msg {
+        display: block;
+        font-size: 0.7rem;
+        margin-top: 4px;
+        opacity: 0.7;
+        text-align: right;
+    }
+
+    /* Ticket activo en la lista */
+    .ticket-activo {
+        background-color: #e7f1ff !important;
+        border-left: 4px solid #0d6efd !important;
+    }
+</style>
+
+<script>
+    // ⚠️ CONFIRMA TU PUERTO AQUÍ
+    const API_URL = "https://localhost:7232/api/Soporte";
+
+    // Variable para controlar el ciclo de actualización automática
+    let intervaloChat = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+        cargarTickets();
+    });
+
+    // 1. CARGAR LISTA DE TICKETS
+    async function cargarTickets() {
+        const contenedor = document.getElementById("listaTickets");
+        contenedor.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>`;
+
+        try {
+            const response = await fetch(API_URL);
+            if (!response.ok) throw new Error("Error API");
+
+            let tickets = await response.json();
+            contenedor.innerHTML = "";
+
+            if (tickets.length === 0) {
+                contenedor.innerHTML = "<p class='text-center text-muted mt-4'>No hay tickets.</p>";
+                return;
+            }
+
+            // Ordenar por ID descendente (más nuevos arriba)
+            tickets.sort((a, b) => (b.id || b.Id) - (a.id || a.Id));
+
+            tickets.forEach(t => {
+                const id = t.id || t.Id;
+                const nombre = t.nombreCliente || t.NombreCliente || "Sin Nombre";
+                const asunto = t.asunto || t.Asunto || "Consulta";
+                const fecha = t.fechaRegistro || t.FechaRegistro;
+
+                const item = document.createElement("a");
+                item.className = "list-group-item list-group-item-action py-3 border-bottom";
+                item.style.cursor = "pointer";
+                item.id = `ticket-${id}`;
+
+                item.innerHTML = `
+                    <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                        <strong class="text-dark">${nombre}</strong>
+                        <small class="text-muted" style="font-size:0.75rem">${new Date(fecha).toLocaleDateString()}</small>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-secondary text-truncate small" style="max-width: 180px;">${asunto}</span>
+                        <span class="badge bg-light text-dark border rounded-pill">#${id}</span>
+                    </div>
+                `;
+
+                // Al hacer clic, activamos la selección
+                item.onclick = () => seleccionarTicket(id, nombre, asunto, item);
+                contenedor.appendChild(item);
+            });
+
+        } catch (e) {
+            contenedor.innerHTML = `<div class="alert alert-danger m-2">Error de conexión con API</div>`;
+        }
+    }
+
+    // 2. SELECCIONAR UN TICKET (E Iniciar el Reloj Automático)
+    function seleccionarTicket(id, nombre, asunto, elementoHTML) {
+        // Estilos visuales de selección
+        document.querySelectorAll('.list-group-item').forEach(el => el.classList.remove('ticket-activo'));
+        elementoHTML.classList.add('ticket-activo');
+
+        // Configurar cabecera del chat
+        document.getElementById("ticketActualId").value = id;
+        document.getElementById("chatTitulo").innerText = nombre;
+        document.getElementById("chatSubtitulo").innerText = asunto;
+        document.getElementById("badgeId").innerText = "#" + id;
+
+        // Habilitar controles
+        document.getElementById("txtRespuesta").disabled = false;
+        document.getElementById("btnEnviar").disabled = false;
+        document.getElementById("txtRespuesta").focus();
+
+        // === [LÓGICA AUTOMÁTICA] ===
+        // 1. Si ya había un intervalo corriendo, lo detenemos
+        if (intervaloChat) clearInterval(intervaloChat);
+
+        // 2. Cargamos mensajes inmediatamente
+        actualizarMensajes(id);
+
+        // 3. Iniciamos un nuevo intervalo que se repite cada 3 segundos
+        intervaloChat = setInterval(() => {
+            actualizarMensajes(id);
+        }, 3000);
+    }
+
+    // 3. DESCARGAR Y DIBUJAR MENSAJES
+    async function actualizarMensajes(id) {
+        try {
+            const response = await fetch(`${API_URL}/${id}/mensajes`);
+            if(response.ok) {
+                const mensajes = await response.json();
+                const caja = document.getElementById("cajaMensajes");
+
+                // Guardar scroll actual para ver si estamos al final
+                const estabaAlFinal = caja.scrollHeight - caja.scrollTop === caja.clientHeight;
+
+                caja.innerHTML = ""; // Limpiar para redibujar
+
+                if(mensajes.length === 0) {
+                    caja.innerHTML = "<div class='text-center text-muted mt-5'>No hay mensajes aún.</div>";
+                    return;
+                }
+
+                mensajes.forEach(m => {
+                    const texto = m.contenido || m.Contenido || "";
+                    let esAdmin = (m.esAdmin !== undefined) ? m.esAdmin : m.EsAdmin;
+                    const fecha = m.fecha || m.Fecha;
+
+                    const div = document.createElement("div");
+                    div.className = `mensaje ${esAdmin ? 'msg-admin' : 'msg-cliente'}`;
+                    div.innerHTML = `
+                        ${texto}
+                        <span class="hora-msg">
+                            ${new Date(fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </span>
+                    `;
+                    caja.appendChild(div);
+                });
+
+                // Auto-scroll solo si es la primera carga o si el usuario ya estaba abajo
+                // (Para no molestar si subió a leer historial)
+                caja.scrollTop = caja.scrollHeight;
+            }
+        } catch(e) { console.error("Error polling", e); }
+    }
+
+    // 4. ENVIAR RESPUESTA (ADMIN)
+    async function enviarMensaje() {
+        const id = document.getElementById("ticketActualId").value;
+        const input = document.getElementById("txtRespuesta");
+        const texto = input.value;
+
+        if(!texto.trim()) return;
+
+        const datos = {
+            soporteId: parseInt(id),
+            contenido: texto,
+            esAdmin: true // IMPORTANTE: True porque responde el Admin
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/${id}/mensajes`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(datos)
+            });
+
+            if (response.ok) {
+                input.value = "";
+                actualizarMensajes(id); // Actualizar inmediatamente
+            }
+        } catch (error) {
+            alert("Error al enviar mensaje");
+        }
+    }
+
+    // Enter para enviar
+    document.getElementById("txtRespuesta").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") enviarMensaje();
+    });
+</script>

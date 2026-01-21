@@ -20,5 +20,6 @@ namespace ProyectoP2.API.Data
 
         public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
         public DbSet<Soporte> Soportes { get; set; }
+        public DbSet<MensajeChat> MensajeChat { get; set; }
     }
 }
