@@ -101,9 +101,11 @@
                     </button>
                     <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                         <ul class="navbar-nav flex-grow-1">
+
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Usuarios" asp-action="Index">USUARIOS</a>
                             </li>
+
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     INVENTARIO
@@ -116,9 +118,11 @@
                                     <li class="nav-item"><a class="nav-link text-dark" asp-area="" asp-controller="Comprobantes" asp-action="Index">📦 Altas y Bajas</a></li>
                                 </ul>
                             </li>
+
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
                             </li>
+
                         </ul>
                         <ul class="navbar-nav ms-auto">
                             @if (HttpContextAccessor.HttpContext.Session.GetString("UsuarioNombre") != null)
