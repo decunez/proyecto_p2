@@ -2,10 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProyectoP2.API.Data;
 using ProyectoP2.API.Models;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic; // Necesario para IEnumerable
+using Experimental.System.Messaging;
 
 namespace ProyectoP2.API.Controllers
 {
@@ -28,7 +25,7 @@ namespace ProyectoP2.API.Controllers
             return await _context.Comprobantes
                 .Include(c => c.Proveedor)
                 .Include(c => c.Detalles)
-                    .ThenInclude(d => d.Producto) // <--- ¡ESTO FALTABA!
+                    .ThenInclude(d => d.Producto)
                 .OrderByDescending(x => x.Id)
                 .ToListAsync();
         }
@@ -39,7 +36,7 @@ namespace ProyectoP2.API.Controllers
         {
             var comprobante = await _context.Comprobantes
                 .Include(c => c.Proveedor)
-                .Include(c => c.Usuario)           // <--- ¡AGREGA ESTO!
+                .Include(c => c.Usuario) 
                 .Include(c => c.Detalles)
                     .ThenInclude(d => d.Producto)
                 .FirstOrDefaultAsync(c => c.Id == id);
@@ -82,6 +79,7 @@ namespace ProyectoP2.API.Controllers
                         {
                             // Si es compra/alta, SUMAMOS al stock
                             productoEnBd.StockActual += detalle.Cantidad;
+                            EnviarNotificacionCola(productoEnBd.Nombre, detalle.Cantidad, productoEnBd.StockActual);
                         }
                         else if (comprobante.TipoMovimiento == "SALIDA")
                         {
@@ -95,9 +93,6 @@ namespace ProyectoP2.API.Controllers
                 }
             }
 
-            // -----------------------------------------------------------------------
-            // 3. GUARDAR EN BASE DE DATOS
-            // -----------------------------------------------------------------------
             _context.Comprobantes.Add(comprobante);
 
             try
@@ -106,10 +101,8 @@ namespace ProyectoP2.API.Controllers
             }
             catch (Exception ex)
             {
-                // Si hay error interno (ej: ID duplicado), lo mostramos
                 return StatusCode(500, "Error interno al guardar: " + ex.Message);
             }
-
             return CreatedAtAction("GetComprobante", new { id = comprobante.Id }, comprobante);
         }
 
@@ -147,5 +140,37 @@ namespace ProyectoP2.API.Controllers
 
             return NoContent();
         }
+
+        private void EnviarNotificacionCola(string nombreProducto, int cantidadIngresada, int stockActual)
+        {
+            try
+            {
+                // Nota: En un servidor real, la ruta suele ser "FormatName:DIRECT=OS:localhost\\private$\\cola_inventario"
+                string rutaCola = @".\Private$\cola_inventario";
+
+                if (!MessageQueue.Exists(rutaCola))
+                {
+                    MessageQueue.Create(rutaCola);
+                }
+
+                using (MessageQueue cola = new MessageQueue(rutaCola))
+                {
+                    string contenido = $"ALTA DE '{nombreProducto}'. Ingresaron: {cantidadIngresada}. Stock Actualizado: {stockActual}";
+
+                    Message mensaje = new Message();
+                    mensaje.Label = "StockUpdate";
+                    mensaje.Body = contenido;
+
+                    cola.Send(mensaje);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error MSMQ: " + ex.Message);
+            }
+        }
+
+
+
     }
 }

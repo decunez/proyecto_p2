@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using ProyectoP2.Web.Models;
 using System.Text;
 using System.Text.Json;
+using Experimental.System.Messaging;
 
 namespace ProyectoP2.Web.Controllers
 {
@@ -310,7 +311,9 @@ namespace ProyectoP2.Web.Controllers
             }
             return View(listaKardex.OrderByDescending(x => x.Fecha).ThenByDescending(x => x.ComprobanteId).ToList());
         }
+
     }
+
 
     public class KardexItem
     {
