@@ -57,7 +57,7 @@
             width: 340px;
             z-index: 9999;
             border-radius: 10px;
-            display: none; /* Oculto por defecto */
+            display: none;
             border: none;
         }
 
@@ -212,17 +212,10 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
 
     <script>
-        // ============================================
-        // CONFIGURACIÓN Y VARIABLES GLOBALES
-        // ============================================
         const API_URL_WIDGET = "https://localhost:7232/api/Soporte";
         let widgetTicketId = 0;
         let widgetInterval = null;
         let mensajesPendientes = [];
-
-        // ============================================
-        // INICIO
-        // ============================================
         document.addEventListener("DOMContentLoaded", () => {
             const guardado = localStorage.getItem("chatTicketId");
             if (guardado) {
@@ -232,7 +225,6 @@
             }
         });
 
-        // Toggle Abrir/Cerrar
         function toggleWidget() {
             const w = document.getElementById("widgetSoporte");
             const btn = document.getElementById("btnFlotante");
@@ -240,17 +232,12 @@
             if (w.style.display === "none" || w.style.display === "") {
                 w.style.display = "block";
                 btn.classList.add("d-none");
-                // Al abrir, forzamos scroll abajo
                 setTimeout(() => scrollAlFondo(), 100);
             } else {
                 w.style.display = "none";
                 btn.classList.remove("d-none");
             }
         }
-
-        // ============================================
-        // LÓGICA DE NEGOCIO
-        // ============================================
 
         // 1. Crear Ticket
         async function crearTicketWidget() {
@@ -290,10 +277,7 @@
             document.getElementById("vistaFormulario").classList.add("d-none");
             document.getElementById("vistaChat").classList.remove("d-none");
             document.getElementById("tituloWidget").innerText = "Ticket #" + widgetTicketId;
-
-            cargarMensajesWidget(); // Carga inicial
-
-            // Polling automático cada 5 segundos (más lento para no saturar)
+            cargarMensajesWidget();
             if(!widgetInterval) widgetInterval = setInterval(() => cargarMensajesWidget(false), 5000);
         }
 
@@ -301,57 +285,45 @@
         async function cargarMensajesWidget(forzarScroll = false) {
             if(!widgetTicketId) return;
             try {
-                // CORRECCIÓN 1: Agregamos ?t=... para evitar caché del navegador
                 const antiCache = new Date().getTime();
                 const url = `${API_URL_WIDGET}/${widgetTicketId}/mensajes?t=${antiCache}`;
 
                 const res = await fetch(url);
                 if(res.ok) {
                     const msjsApi = await res.json();
-                    console.log("Mensajes recibidos:", msjsApi.length); // Para depurar en consola
+                    console.log("Mensajes recibidos:", msjsApi.length);
                     renderizarMensajes(msjsApi, forzarScroll);
                 }
             } catch(e) { console.error("Error obteniendo mensajes", e); }
         }
 
-        // --- BOTÓN ACTUALIZAR MANUAL ---
         async function actualizarChatManual(btn) {
             const icon = btn.querySelector('i');
-            icon.classList.add('fa-spin'); // Empieza a girar
-
-            // Llamamos a cargar mensajes y FORZAMOS EL SCROLL (true)
+            icon.classList.add('fa-spin');
             await cargarMensajesWidget(true);
 
             setTimeout(() => {
-                icon.classList.remove('fa-spin'); // Deja de girar
+                icon.classList.remove('fa-spin');
             }, 500);
         }
 
         // 4. Renderizar
         function renderizarMensajes(listaApi, forzarScroll) {
             const caja = document.getElementById("chatClienteCaja");
-
-            // Detectar si el usuario ya estaba abajo antes de limpiar
             const estabaAbajo = caja.scrollTop + caja.clientHeight >= caja.scrollHeight - 50;
 
-            caja.innerHTML = ""; // Limpiamos la caja
-
-            // A) Pintamos los mensajes de la API
+            caja.innerHTML = "";
             listaApi.forEach(m => {
                 const contenido = m.contenido || m.Contenido;
-                // Si la API ya trajo el mensaje, lo sacamos de pendientes
                 mensajesPendientes = mensajesPendientes.filter(p => p !== contenido);
                 pintarBurbuja(m, false);
             });
 
-            // B) Pintamos los pendientes (los que enviaste pero la API aun no confirma)
             mensajesPendientes.forEach(texto => {
                 const msgTemp = { Contenido: texto, EsAdmin: false };
                 pintarBurbuja(msgTemp, true);
             });
 
-            // CORRECCIÓN 2: Lógica de Scroll mejorada
-            // Bajamos si: Forzamos manual, o estaba abajo, o es la primera carga
             if(forzarScroll || estabaAbajo || listaApi.length > 0) {
                 scrollAlFondo();
             }
@@ -362,7 +334,6 @@
             caja.scrollTop = caja.scrollHeight;
         }
 
-        // Helper para crear HTML de burbuja
         function pintarBurbuja(m, esPendiente) {
             const caja = document.getElementById("chatClienteCaja");
             const texto = m.contenido || m.Contenido;
@@ -381,17 +352,12 @@
             caja.appendChild(div);
         }
 
-        // 5. Enviar Mensaje (POST)
         async function enviarMensajeCliente() {
             const input = document.getElementById("txtMensajeCliente");
             const texto = input.value;
 
             if (!texto.trim()) return;
-
-            // Agregamos visualmente de inmediato
             mensajesPendientes.push(texto);
-
-            // Render manual rápido
             const msgTemp = { Contenido: texto, EsAdmin: false };
             pintarBurbuja(msgTemp, true);
             scrollAlFondo();
@@ -411,7 +377,6 @@
                     body: JSON.stringify(datos)
                 });
 
-                // Opcional: Actualizar automáticamente después de enviar
                 setTimeout(() => cargarMensajesWidget(true), 1000);
 
             } catch (error) {
@@ -422,7 +387,6 @@
         function handleEnter(e) {
             if (e.key === "Enter") enviarMensajeCliente();
         }
-
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
