@@ -2,55 +2,27 @@
     ViewData["Title"] = "Bandeja de Soporte";
 }
 
-<div class="container-fluid mt-3">
-    <div class="row">
-        <div class="col-md-4 border-end d-flex flex-column" style="height: 85vh;">
-
-            <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="m-0">📥 Tickets</h5>
-                <button class="btn btn-sm btn-outline-primary" onclick="sincronizarYRecargar()" title="Descargar mensajes de la cola">
-                    <i class="fa fa-sync"></i> ↻ Actualizar
-                </button>
-            </div>
-
-            <div id="listaTickets" class="list-group list-group-flush" style="overflow-y: auto;">
-                <div class="text-center mt-5">
-                    <div class="spinner-border text-primary" role="status"></div>
-                    <p class="small text-muted mt-2">Cargando tickets...</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-8 d-flex flex-column" style="height: 85vh;">
-
-            <div class="p-3 bg-primary text-white shadow-sm d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 id="chatTitulo" class="m-0 fw-bold">Selecciona un ticket</h5>
-                    <small id="chatSubtitulo" class="text-white-50">...</small>
-                </div>
-                <span class="badge bg-light text-primary" id="badgeId">#</span>
-            </div>
-
-            <div id="cajaMensajes" class="flex-grow-1 p-4" style="overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background-color: #f8f9fa;">
-                <div class="text-center text-muted mt-5">
-                    <i class="fa fa-comments fa-3x mb-3"></i>
-                    <p>Selecciona un usuario de la izquierda para ver la conversación.</p>
-                </div>
-            </div>
-
-            <div class="p-3 border-top bg-light d-flex gap-2">
-                <input type="hidden" id="ticketActualId" value="0">
-                <input type="text" id="txtRespuesta" class="form-control" placeholder="Escriba un mensaje..." disabled autocomplete="off">
-                <button class="btn btn-primary px-4" id="btnEnviar" onclick="enviarMensaje()" disabled>
-                    Enviar ➤
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
-    /* Estilos (Igual que antes) */
+    /* === NUEVO: OCULTAR MENÚ Y BURBUJA DEL LAYOUT === */
+    /* Esto oculta la barra de navegación superior y el botón flotante solo aquí */
+    header, nav, .navbar {
+        display: none !important;
+    }
+
+    #btnFlotante, #widgetSoporte {
+        display: none !important;
+    }
+
+    /* Ajuste para que el contenido suba y ocupe toda la pantalla */
+    body {
+        padding-top: 0 !important;
+    }
+
+    main {
+        margin-top: 0 !important;
+    }
+
+    /* === ESTILOS DEL CHAT === */
     .mensaje {
         max-width: 75%;
         padding: 10px 15px;
@@ -91,6 +63,53 @@
     }
 </style>
 
+<div class="container-fluid mt-3">
+    <div class="row">
+        <div class="col-md-4 border-end d-flex flex-column" style="height: 95vh;">
+
+            <div class="p-3 bg-light border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="m-0">📥 Tickets</h5>
+                <button class="btn btn-sm btn-outline-primary" onclick="sincronizarYRecargar()" title="Descargar mensajes de la cola">
+                    <i class="fa fa-sync"></i> ↻ Actualizar
+                </button>
+            </div>
+
+            <div id="listaTickets" class="list-group list-group-flush" style="overflow-y: auto;">
+                <div class="text-center mt-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="small text-muted mt-2">Cargando tickets...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 d-flex flex-column" style="height: 95vh;">
+
+            <div class="p-3 bg-primary text-white shadow-sm d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 id="chatTitulo" class="m-0 fw-bold">Selecciona un ticket</h5>
+                    <small id="chatSubtitulo" class="text-white-50">...</small>
+                </div>
+                <span class="badge bg-light text-primary" id="badgeId">#</span>
+            </div>
+
+            <div id="cajaMensajes" class="flex-grow-1 p-4" style="overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background-color: #f8f9fa;">
+                <div class="text-center text-muted mt-5">
+                    <i class="fa fa-comments fa-3x mb-3"></i>
+                    <p>Selecciona un usuario de la izquierda para ver la conversación.</p>
+                </div>
+            </div>
+
+            <div class="p-3 border-top bg-light d-flex gap-2">
+                <input type="hidden" id="ticketActualId" value="0">
+                <input type="text" id="txtRespuesta" class="form-control" placeholder="Escriba un mensaje..." disabled autocomplete="off">
+                <button class="btn btn-primary px-4" id="btnEnviar" onclick="enviarMensaje()" disabled>
+                    Enviar ➤
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     // === CONFIGURACIÓN ===
     const API_URL = "https://localhost:7232/api/Soporte"; // Verifica tu puerto
@@ -100,9 +119,10 @@
         cargarTickets();
     });
 
+    // === SINCRONIZACIÓN MANUAL ===
     async function sincronizarYRecargar() {
         const btn = document.querySelector(".btn-outline-primary");
-        const icono = btn.querySelector("i");
+        const icono = btn ? btn.querySelector("i") : null;
 
         // Efecto visual de carga
         if(btn) btn.disabled = true;
@@ -137,12 +157,14 @@
     // 1. CARGAR LISTA DE TICKETS
     async function cargarTickets() {
         const contenedor = document.getElementById("listaTickets");
+        // Solo mostramos spinner si está vacío para no parpadear en recargas
         if(contenedor.innerHTML.trim() === "") {
              contenedor.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-primary"></div></div>`;
         }
 
         try {
-            const response = await fetch(API_URL);
+            // Agregamos un timestamp para evitar caché del navegador en la lista
+            const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
             if (!response.ok) throw new Error("Error API");
 
             let tickets = await response.json();
@@ -202,22 +224,21 @@
         document.getElementById("chatSubtitulo").innerText = asunto;
         document.getElementById("badgeId").innerText = "#" + id;
 
-        // Habilitar inputs
         document.getElementById("txtRespuesta").disabled = false;
         document.getElementById("btnEnviar").disabled = false;
         document.getElementById("txtRespuesta").focus();
 
-        // Cargar mensajes UNA SOLA VEZ (Sin setInterval)
         actualizarMensajes(id);
     }
 
     // 3. DIBUJAR MENSAJES
     async function actualizarMensajes(id) {
         try {
-            const response = await fetch(`${API_URL}/${id}/mensajes`);
+            const response = await fetch(`${API_URL}/${id}/mensajes?t=${new Date().getTime()}`);
             if(response.ok) {
                 const mensajes = await response.json();
                 const caja = document.getElementById("cajaMensajes");
+
                 const usuarioHizoScrollArriba = caja.scrollTop + caja.clientHeight < caja.scrollHeight - 50;
 
                 caja.innerHTML = "";
@@ -251,53 +272,55 @@
         } catch(e) { console.error("Error cargando mensajes", e); }
     }
 
+    // 4. ENVIAR MENSAJE + AUTO SYNC
     async function enviarMensaje() {
-            const hiddenId = document.getElementById("ticketActualId");
-            const input = document.getElementById("txtRespuesta");
+        const hiddenId = document.getElementById("ticketActualId");
+        const input = document.getElementById("txtRespuesta");
 
-            if (!hiddenId || !input) return;
+        if (!hiddenId || !input) return;
 
-            const id = hiddenId.value;
-            const texto = input.value;
+        const id = hiddenId.value;
+        const texto = input.value;
 
-            if(!texto.trim()) return;
+        if(!texto.trim()) return;
 
-            input.disabled = true;
+        input.disabled = true;
 
-            const datos = {
-                TicketId: parseInt(id), // Asegúrate de que coincida con tu DTO en C#
-                Contenido: texto,
-                EsAdmin: true
-            };
+        const datos = {
+            TicketId: parseInt(id),
+            Contenido: texto,
+            EsAdmin: true
+        };
 
-            try {
-                // 1. Enviar el mensaje al servidor
-                const response = await fetch(`${API_URL}/${id}/mensajes`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(datos)
-                });
+        try {
+            // A. Enviar el mensaje al servidor
+            const response = await fetch(`${API_URL}/${id}/mensajes`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(datos)
+            });
 
-                if (response.ok) {
-                    input.value = ""; // Limpiar caja de texto
+            if (response.ok) {
+                input.value = "";
 
-                    console.log("Mensaje enviado. Ejecutando sincronización completa...");
-                    await sincronizarYRecargar();
+                // B. Sincronizar automáticamente tras enviar
+                console.log("Mensaje enviado. Ejecutando sincronización completa...");
+                await sincronizarYRecargar();
 
-                } else {
-                    alert("Error al enviar el mensaje.");
-                }
-            } catch (error) {
-                console.error("Error envío:", error);
-                alert("Error de conexión");
-            } finally {
-                input.disabled = false;
-                input.focus(); // Devolver el foco para seguir escribiendo
+            } else {
+                alert("Error al enviar el mensaje.");
             }
+        } catch (error) {
+            console.error("Error envío:", error);
+            alert("Error de conexión");
+        } finally {
+            input.disabled = false;
+            input.focus();
         }
-
+    }
+    // Enviar con Enter
     document.getElementById("txtRespuesta").addEventListener("keypress", function(e) {
         if (e.key === "Enter") enviarMensaje();
     });
- 
+
 </script>
